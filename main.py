@@ -1,3 +1,10 @@
+'''
+Author: RoadWide
+Date: 2022-04-14 19:03:57
+LastEditTime: 2022-04-19 21:27:04
+FilePath: /PytorchTemplate/main.py
+Description: 
+'''
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -6,7 +13,7 @@ from DataSet import DataSet
 
 
 batch_size = 256
-epochs = 20
+epochs = 10
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 train_loader = torch.utils.data.DataLoader(
@@ -62,3 +69,10 @@ def test(model, device, test_loader):
 for epoch in range(1,epochs+1):
     train(model, device, train_loader, optimizer, epoch)
     test(model, device, test_loader)
+
+print("储存模型...")
+model.save("savemodel.ckpt")
+print("加载模型...")
+model2 = Net().to(device)
+model2.load("savemodel.ckpt")
+test(model2, device, test_loader)

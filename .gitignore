@@ -1,2 +1,3 @@
 dataset.npz
 __pycache__/
+savemodel.ckpt
