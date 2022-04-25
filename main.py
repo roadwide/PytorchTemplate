@@ -1,7 +1,7 @@
 '''
 Author: RoadWide
 Date: 2022-04-14 19:03:57
-LastEditTime: 2022-04-19 21:27:04
+LastEditTime: 2022-04-25 11:55:15
 FilePath: /PytorchTemplate/main.py
 Description: 
 '''
@@ -10,24 +10,30 @@ import torch.nn.functional as F
 import torch.optim as optim
 from Model import Net
 from DataSet import DataSet
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--lr', type=float, default=1e-2)
+parser.add_argument('--batch_size', type=int, default=512)
+parser.add_argument('--epochs', type=int, default=10)
 
-batch_size = 256
-epochs = 10
+args = parser.parse_args()
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 train_loader = torch.utils.data.DataLoader(
     DataSet('dataset.npz', train=True),
-    batch_size = batch_size, shuffle=True)
+    batch_size = args.batch_size, shuffle=True)
 
 
 test_loader = torch.utils.data.DataLoader(
         DataSet('dataset.npz', train=False),
-        batch_size=batch_size, shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
 model = Net().to(device)
-optimizer = optim.Adam(model.parameters())
-
+optimizer = optim.Adam(model.parameters(), lr=args.lr)
+# 每个epoch更新lr, 新的lr 为 初始lr / (epoch + 1), 例如lr = 0.1  0.05  0.033  0.025
+lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1/(epoch+1))
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
     correct = 0
@@ -48,6 +54,7 @@ def train(model, device, train_loader, optimizer, epoch):
                 epoch, total, len(train_loader.dataset),
                 100. * batch_num / len(train_loader), loss.item()))
     print(f'\nTrain Epoch: {epoch} Train Set Accuracy: {correct}/{len(train_loader.dataset)} ({correct/len(train_loader.dataset):.2%})')
+    lr_scheduler.step()    # lr的调整应该在每个epoch结束之后，而不是每个batch结束之后
 
 def test(model, device, test_loader):
     model.eval()
@@ -66,7 +73,7 @@ def test(model, device, test_loader):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-for epoch in range(1,epochs+1):
+for epoch in range(1,args.epochs+1):
     train(model, device, train_loader, optimizer, epoch)
     test(model, device, test_loader)
 
