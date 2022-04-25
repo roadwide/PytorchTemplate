@@ -1,7 +1,7 @@
 '''
 Author: RoadWide
 Date: 2022-04-14 19:03:57
-LastEditTime: 2022-04-25 11:55:15
+LastEditTime: 2022-04-25 13:01:07
 FilePath: /PytorchTemplate/main.py
 Description: 
 '''
@@ -20,6 +20,13 @@ parser.add_argument('--epochs', type=int, default=10)
 args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def setup_seed(seed):
+    # 设置随机数种子
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+setup_seed(1234)
 
 train_loader = torch.utils.data.DataLoader(
     DataSet('dataset.npz', train=True),
