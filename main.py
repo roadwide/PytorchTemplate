@@ -1,7 +1,7 @@
 '''
 Author: RoadWide
 Date: 2022-04-14 19:03:57
-LastEditTime: 2022-04-25 13:01:07
+LastEditTime: 2022-05-13 11:02:31
 FilePath: /PytorchTemplate/main.py
 Description: 
 '''
@@ -11,6 +11,7 @@ import torch.optim as optim
 from Model import Net
 from DataSet import DataSet
 import argparse
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lr', type=float, default=1e-2)
@@ -44,10 +45,8 @@ lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1/
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
     correct = 0
-    total = 0
-    for batch_idx, (data, target) in enumerate(train_loader):
-        batch_num = batch_idx + 1
-        total += len(data)
+    loop = tqdm(train_loader, total =len(train_loader))
+    for data, target in loop:
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -56,11 +55,8 @@ def train(model, device, train_loader, optimizer, epoch):
         optimizer.step()
         pred = output.max(1, keepdim=True)[1]
         correct += pred.eq(target.view_as(pred)).sum().item()
-        if (batch_num % 30 == 0 or batch_num == len(train_loader)):
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, total, len(train_loader.dataset),
-                100. * batch_num / len(train_loader), loss.item()))
-    print(f'\nTrain Epoch: {epoch} Train Set Accuracy: {correct}/{len(train_loader.dataset)} ({correct/len(train_loader.dataset):.2%})')
+        loop.set_description(f'Epoch [{epoch}/{args.epochs}]')
+        loop.set_postfix(loss = loss.item(),acc = f"{correct/len(train_loader.dataset):.2%}")
     lr_scheduler.step()    # lr的调整应该在每个epoch结束之后，而不是每个batch结束之后
 
 def test(model, device, test_loader):
